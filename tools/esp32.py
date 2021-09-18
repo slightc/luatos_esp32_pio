@@ -84,7 +84,7 @@ def genera_firmware_pkg():
         shutil.rmtree("tmp")
         print("rm ./tmp")
         config.set("esp32", "FIRMWARE_PATH", zip_name)
-        with open("local.ini", "w+") as f:
+        with open("tools/local.ini", "w+") as f:
             config.write(f)
     else:
         print("未发现build目录，请执行‘idf.py build’编译")
@@ -163,7 +163,7 @@ def genera_batch_pkg():
         shutil.rmtree("tmp")
         print("rm ./tmp")
         config.set("esp32", "FIRMWARE_PATH", zip_name)
-        with open("local.ini", "w+") as f:
+        with open("tools/local.ini", "w+") as f:
             config.write(f)
     else:
         print("未发现build目录，请执行‘idf.py build’编译")
@@ -171,8 +171,8 @@ def genera_batch_pkg():
 
 # 解压固件
 def unzip_firmware():
-    if os.path.exists("local.ini"):
-        config.read("local.ini", encoding='utf-8')
+    if os.path.exists("tools/local.ini"):
+        config.read("tools/local.ini", encoding='utf-8')
         now_firmware_path = os.path.abspath(config['esp32']['FIRMWARE_PATH'])
         print("读取local.ini成功")
     else:
@@ -245,7 +245,7 @@ def erase_nvs():
 
 # 生成LuatOS脚本刷写文件
 def make_luat_fs():
-    os.system("python spiffsgen.py " + fs_size + " " + fs_path + " " + fs_bin)
+    os.system("python tools/spiffsgen.py " + fs_size + " " + fs_path + " " + fs_bin)
     print("spiffs gen done")
 
 
@@ -298,9 +298,8 @@ if __name__ == '__main__':
     #
     #  ============================================================
     #  ============================================================
-    if os.path.exists("local.ini"):
-        config.read("local.ini", encoding='utf-8')
-        esp_idf_path = os.path.abspath(config['esp32']['ESP_IDF_PATH']) + os.sep
+    if os.path.exists("tools/local.ini"):
+        config.read("tools/local.ini", encoding='utf-8')
         user_project_path = os.path.abspath(config['esp32']['USER_PROJECT_PATH']) + os.sep
         firmware_path = os.path.abspath(config['esp32']['FIRMWARE_PATH'])
         fs_path = os.path.abspath(config['esp32']['DEMO_PATH']) + os.sep
