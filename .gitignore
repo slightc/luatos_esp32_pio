@@ -1,0 +1,12 @@
+build/
+.vscode/*
+!.vscode/recommend
+!.vscode/extensions.json
+.pio
+sdkconfig.old
+release/
+
+**/demo.bin
+**/.DS_Store
+
+sdkconfig.*.old
