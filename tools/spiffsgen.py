@@ -117,7 +117,7 @@ class SpiffsObjLuPage(SpiffsPage):
         SpiffsPage.__init__(self, bix, build_config)
 
         self.obj_ids_limit = self.build_config.OBJ_LU_PAGES_OBJ_IDS_LIM
-        self.obj_ids = list()
+        self.obj_ids = []
 
     def _calc_magic(self, blocks_lim):
         # Calculate the magic value mirrorring computation done by the macro SPIFFS_MAGIC defined in
@@ -129,7 +129,7 @@ class SpiffsObjLuPage(SpiffsPage):
         return magic.value
 
     def register_page(self, page):
-        if not self.obj_ids_limit > 0:
+        if self.obj_ids_limit <= 0:
             raise SpiffsFullError()
 
         obj_id = (page.obj_id, page.__class__)
@@ -157,13 +157,13 @@ class SpiffsObjLuPage(SpiffsPage):
         # spot taken up by the last obj id on last lookup page. The parent is responsible
         # for determining which is the last lookup page and calling this function.
         remaining = self.obj_ids_limit
-        empty_obj_id_dict = {
-            1: 0xFF,
-            2: 0xFFFF,
-            4: 0xFFFFFFFF,
-            8: 0xFFFFFFFFFFFFFFFF
-        }
         if (remaining >= 2):
+            empty_obj_id_dict = {
+                1: 0xFF,
+                2: 0xFFFF,
+                4: 0xFFFFFFFF,
+                8: 0xFFFFFFFFFFFFFFFF
+            }
             for i in range(remaining):
                 if i == remaining - 2:
                     self.obj_ids.append((self._calc_magic(blocks_lim), SpiffsObjDataPage))
@@ -186,10 +186,10 @@ class SpiffsObjIndexPage(SpiffsPage):
         else:
             self.pages_lim = self.build_config.OBJ_INDEX_PAGES_OBJ_IDS_LIM
 
-        self.pages = list()
+        self.pages = []
 
     def register_page(self, page):
-        if not self.pages_lim > 0:
+        if self.pages_lim <= 0:
             raise SpiffsFullError
 
         self.pages.append(page.offset)
@@ -269,11 +269,11 @@ class SpiffsBlock():
         self.build_config = build_config
         self.offset = bix * self.build_config.block_size
         self.remaining_pages = self.build_config.OBJ_USABLE_PAGES_PER_BLOCK
-        self.pages = list()
+        self.pages = []
         self.bix = bix
 
-        lu_pages = list()
-        for i in range(self.build_config.OBJ_LU_PAGES_PER_BLOCK):
+        lu_pages = []
+        for _ in range(self.build_config.OBJ_LU_PAGES_PER_BLOCK):
             page = SpiffsObjLuPage(self.bix, self.build_config)
             lu_pages.append(page)
 
@@ -302,7 +302,7 @@ class SpiffsBlock():
         self.pages.append(page)
 
     def begin_obj(self, obj_id, size, name, obj_index_span_ix=0, obj_data_span_ix=0):
-        if not self.remaining_pages > 0:
+        if self.remaining_pages <= 0:
             raise SpiffsFullError()
         self._reset()
 
@@ -319,7 +319,7 @@ class SpiffsBlock():
         self.cur_obj_index_span_ix += 1
 
     def update_obj(self, contents):
-        if not self.remaining_pages > 0:
+        if self.remaining_pages <= 0:
             raise SpiffsFullError()
         page = SpiffsObjDataPage(self.offset + (len(self.pages) * self.build_config.page_size),
                                  self.cur_obj_id, self.cur_obj_data_span_ix, contents, self.build_config)
@@ -361,7 +361,7 @@ class SpiffsFS():
         self.img_size = img_size
         self.build_config = build_config
 
-        self.blocks = list()
+        self.blocks = []
         self.blocks_lim = self.img_size // self.build_config.block_size
         self.remaining_blocks = self.blocks_lim
         self.cur_obj_id = 1  # starting object id
@@ -398,9 +398,9 @@ class SpiffsFS():
             block = self._create_block()
             block.begin_obj(self.cur_obj_id, len(contents), name)
 
-        contents_chunk = stream.read(self.build_config.OBJ_DATA_PAGE_CONTENT_LEN)
-
-        while contents_chunk:
+        while contents_chunk := stream.read(
+            self.build_config.OBJ_DATA_PAGE_CONTENT_LEN
+        ):
             try:
                 block = self.blocks[-1]
                 try:
@@ -428,8 +428,6 @@ class SpiffsFS():
                 block.cur_obj_index_span_ix = prev_block.cur_obj_index_span_ix
                 continue
 
-            contents_chunk = stream.read(self.build_config.OBJ_DATA_PAGE_CONTENT_LEN)
-
         block.end_obj()
 
         self.cur_obj_id += 1
@@ -438,8 +436,8 @@ class SpiffsFS():
         img = b''
         for block in self.blocks:
             img += block.to_binary(self.blocks_lim)
-        bix = len(self.blocks)
         if self.build_config.use_magic:
+            bix = len(self.blocks)
             # Create empty blocks with magic numbers
             while self.remaining_blocks > 0:
                 block = SpiffsBlock(bix, self.blocks_lim, self.build_config)
@@ -512,7 +510,7 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.base_dir):
-        raise RuntimeError('given base directory %s does not exist' % args.base_dir)
+        raise RuntimeError(f'given base directory {args.base_dir} does not exist')
 
     with open(args.output_file, 'wb') as image_file:
         image_size = int(args.image_size, 0)
