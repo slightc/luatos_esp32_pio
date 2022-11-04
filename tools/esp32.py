@@ -18,17 +18,16 @@ except:
 # 生成标准固件（不包括fs分区）
 def genera_firmware_pkg():
     # 先检测一下有没有编译
-    if os.path.isdir(user_project_path + "/build"):
+    if os.path.isdir(f"{user_project_path}/build"):
         print("found /build")
-        isExists = os.path.exists('tmp')
-        if not isExists:
+        if isExists := os.path.exists('tmp'):
+            print("found /tmp")
+        else:
             # 判断下tmp文件夹，有就创建，没有就跳过
             os.mkdir('tmp')
             print("mkdir /tmp")
-        else:
-            print("found /tmp")
         # 检索build里面的分区表
-        with open(user_project_path + '/build/flasher_args.json', 'r', encoding='utf-8') as f:
+        with open(f'{user_project_path}/build/flasher_args.json', 'r', encoding='utf-8') as f:
             firmware_json = json.load(f)
             bootloader_offset = firmware_json['bootloader']['offset']
             bootloader_file = firmware_json['bootloader']['file']
@@ -62,22 +61,27 @@ def genera_firmware_pkg():
             print("write tmp/rominfo.json done")
 
         # 复制bin到tmp目录
-        shutil.copy(user_project_path + '/build/' + bootloader_file, "tmp/")
-        shutil.copy(user_project_path + '/build/' + partition_table_file, "tmp/")
-        shutil.copy(user_project_path + '/build/' + otadata_file, "tmp/")
-        shutil.copy(user_project_path + '/build/' + app_file, "tmp/")
+        shutil.copy(f'{user_project_path}/build/{bootloader_file}', "tmp/")
+        shutil.copy(f'{user_project_path}/build/{partition_table_file}', "tmp/")
+        shutil.copy(f'{user_project_path}/build/{otadata_file}', "tmp/")
+        shutil.copy(f'{user_project_path}/build/{app_file}', "tmp/")
         print("copy down")
 
         # 打包pkg
         git_sha1 = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
-        zip_name = "Luatos_esp32_" + git_sha1.decode() + "_" + time.strftime("%Y%m%d%H%M%S", time.localtime()) + ".zip"
-        print("pkg:" + zip_name)
+        zip_name = (
+            f"Luatos_esp32_{git_sha1.decode()}_"
+            + time.strftime("%Y%m%d%H%M%S", time.localtime())
+            + ".zip"
+        )
+
+        print(f"pkg:{zip_name}")
         z = zipfile.ZipFile(zip_name, "w")
 
         if os.path.isdir("tmp"):
             for d in os.listdir("tmp"):
-                z.write("tmp/" + d, arcname=d)
-                print("zipping:" + d)
+                z.write(f"tmp/{d}", arcname=d)
+                print(f"zipping:{d}")
         z.close()
         print("pkg done")
         # tmp没用了，删了
@@ -93,17 +97,16 @@ def genera_firmware_pkg():
 # 生成量产固件（包括fs分区）
 def genera_batch_pkg():
     # 先检测一下有没有编译
-    if os.path.isdir(user_project_path + "/build"):
+    if os.path.isdir(f"{user_project_path}/build"):
         print("found /build")
-        isExists = os.path.exists('tmp')
-        if not isExists:
+        if isExists := os.path.exists('tmp'):
+            print("found /tmp")
+        else:
             # 判断下tmp文件夹，有就创建，没有就跳过
             os.mkdir('tmp')
             print("mkdir /tmp")
-        else:
-            print("found /tmp")
         # 检索build里面的分区表
-        with open(user_project_path + '/build/flasher_args.json', 'r', encoding='utf-8') as f:
+        with open(f'{user_project_path}/build/flasher_args.json', 'r', encoding='utf-8') as f:
             firmware_json = json.load(f)
             # print(firmware_json)
             bootloader_offset = firmware_json['bootloader']['offset']
@@ -139,24 +142,28 @@ def genera_batch_pkg():
             print("write tmp/rominfo.json done")
 
         # 复制bin到tmp目录
-        shutil.copy(user_project_path + '/build/' + bootloader_file, "tmp/")
-        shutil.copy(user_project_path + '/build/' + partition_table_file, "tmp/")
-        shutil.copy(user_project_path + '/build/' + otadata_file, "tmp/")
-        shutil.copy(user_project_path + '/build/' + app_file, "tmp/")
+        shutil.copy(f'{user_project_path}/build/{bootloader_file}', "tmp/")
+        shutil.copy(f'{user_project_path}/build/{partition_table_file}', "tmp/")
+        shutil.copy(f'{user_project_path}/build/{otadata_file}', "tmp/")
+        shutil.copy(f'{user_project_path}/build/{app_file}', "tmp/")
         shutil.copy(fs_bin, "tmp/")
         print("copy batch_pkg done")
 
         # 打包batch_pkg
         git_sha1 = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
-        zip_name = "Luatos_esp32_batch_" + git_sha1.decode() + "_" + time.strftime("%Y%m%d%H%M%S",
-                                                                                   time.localtime()) + ".zip"
-        print("pkg:" + zip_name)
+        zip_name = (
+            f"Luatos_esp32_batch_{git_sha1.decode()}_"
+            + time.strftime("%Y%m%d%H%M%S", time.localtime())
+            + ".zip"
+        )
+
+        print(f"pkg:{zip_name}")
         z = zipfile.ZipFile(zip_name, "w")
 
         if os.path.isdir("tmp"):
             for d in os.listdir("tmp"):
-                z.write("tmp/" + d, arcname=d)
-                print("zipping:" + d)
+                z.write(f"tmp/{d}", arcname=d)
+                print(f"zipping:{d}")
         z.close()
         print("pkg done")
         # tmp没用了，删了
@@ -245,7 +252,7 @@ def erase_nvs():
 
 # 生成LuatOS脚本刷写文件
 def make_luat_fs():
-    os.system("python tools/spiffsgen.py " + fs_size + " " + fs_path + " " + fs_bin)
+    os.system(f"python tools/spiffsgen.py {fs_size} {fs_path} {fs_bin}")
     print("spiffs gen done")
 
 
